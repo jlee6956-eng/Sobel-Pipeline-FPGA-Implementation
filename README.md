@@ -1,26 +1,56 @@
-# SPI-to-UART FPGA Bridge
+# FPGA Streaming Sobel Edge Detection Accelerator
 
-This project implements a hardware communication pipeline on a Xilinx Artix-7 FPGA that receives encoded data over SPI, applies rule-based processing in RTL, and transmits results over UART for real-time observation on a host computer.
+A streaming Sobel edge detection accelerator written in SystemVerilog. The design processes one pixel per clock after pipeline fill using line buffers and a sliding 3×3 window, then stores the processed edge image in inferred FPGA block RAM.
 
-The design was written in SystemVerilog and organized into modular components including a clock-domain crossing synchronizer, SPI bit receiver, edge detector, finite state machine (FSM) controller, FIFO buffer, and UART transmitter. An Arduino-based SPI master sends encoded 3-byte messages over a 6 MHz SPI bus, and a Python viewer decodes the UART output for debugging and visualization.
+This project was built to demonstrate FPGA-oriented RTL design techniques including streaming architectures, pipelining, finite state machines, inferred memory, and hardware/software verification.
+
+---
 
 ## Features
 
-- SPI slave interface implemented in SystemVerilog
-- Clock-domain crossing synchronization
-- Edge detection for SPI clock/data sampling
-- FSM-based control flow
-- FIFO buffering for streamed data
-- UART transmitter for host communication
-- Arduino SPI master test source
-- Python UART viewer / decoder
-- End-to-end simulation and hardware verification
+- Streaming image processing architecture
+- 3×3 sliding window generation
+- Sobel X and Sobel Y convolution
+- Gradient magnitude calculation
+- Thresholding
+- Fully pipelined datapath
+- Output buffer using inferred RAM
+- Controller FSM
+- Python image preprocessing for RTL simulation
 
-## System Overview
 
-The data flow is:
+## RTL Modules
 
-**Arduino SPI Master → FPGA SPI Receiver → Rule-Matching Logic → FIFO → UART Transmitter → Python Viewer**
+### line_buffer.sv
 
-The FPGA receives 3-byte SPI messages, decodes them in RTL, applies conditional logic, and outputs the result over UART. This makes it possible to test and debug the system in real time.
+Stores previous image rows to enable streaming 3×3 window generation.
 
+---
+
+### window_generator.sv
+
+Produces a continuous 3×3 sliding window from the incoming pixel stream.
+
+---
+
+### convolution.sv
+
+Computes
+
+- Sobel X
+- Sobel Y
+- Gradient magnitude
+- Thresholded edge output
+
+---
+
+### buffer.sv
+
+Stores valid edge pixels into inferred RAM.
+
+Provides
+
+- write pointer
+- read pointer
+- buffer full detection
+- read complete detection
